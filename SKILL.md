@@ -1,17 +1,17 @@
 ---
 name: social-media-liked-collector
-description: Use when collecting, resuming, inspecting, or exporting liked/favorited Douyin/抖音 and Xiaohongshu/小红书 social media content from the local social_zongjie project, especially when the user asks for social_media, social media liked collection, 点赞采集, 原文采集, OCR, or Excel output.
+description: Use when collecting, resuming, inspecting, or exporting liked/favorited Douyin/抖音 and Xiaohongshu/小红书 social media content with the bundled social_zongjie project, especially for social_media, 点赞采集, 原文采集, OCR, or Excel output.
 ---
 
 # Social Media Liked Collector
 
 ## Overview
 
-Use the local `social_zongjie` Node project to collect original liked-content text from Douyin and Xiaohongshu into Excel. The tool connects to a dedicated Edge session over CDP, preserves source links, uses local Tesseract OCR for image text, and does not call external AI services.
+Use the bundled `social_zongjie` Node project to collect original liked-content text from Douyin and Xiaohongshu into Excel. The tool connects to a dedicated Edge session over CDP, preserves source URLs as plain `http`/`https` text, uses local Tesseract OCR for image text, and does not call external AI services.
 
-Project path:
+Bundled project path:
 
-`C:\Users\Administrator\Desktop\code\social_zongjie`
+`C:\Users\Administrator\.agents\skills\social-media-liked-collector\assets\social_zongjie`
 
 ## Required Boundaries
 
@@ -23,10 +23,10 @@ Project path:
 
 ## Workflow
 
-1. Work from the project directory:
+1. Work from the bundled project directory:
 
 ```powershell
-Set-Location 'C:\Users\Administrator\Desktop\code\social_zongjie'
+Set-Location 'C:\Users\Administrator\.agents\skills\social-media-liked-collector\assets\social_zongjie'
 ```
 
 2. Verify dependencies are present. If `node_modules` is missing, run `npm install`. The project postinstall links Codex's spreadsheet artifact tool.
@@ -54,40 +54,42 @@ powershell -ExecutionPolicy Bypass -File scripts\start-edge.ps1
 
 Ask the user to log in manually if Douyin or Xiaohongshu is not logged in. Do not close this Edge window while collecting.
 
-6. Run collection:
+6. Run collection. Default `count` mode processes 20 Douyin items and 20 Xiaohongshu items:
 
 ```powershell
 npm start
 ```
 
-The default processes 20 Douyin items and 20 Xiaohongshu items.
-
 Use targeted commands when the user specifies scope:
 
 ```powershell
-node src\cli.mjs --platform both --douyin-limit 10 --xhs-limit 15
+node src\cli.mjs --mode count --platform both --douyin-limit 10 --xhs-limit 15
 node src\cli.mjs --platform douyin --douyin-limit 20
 node src\cli.mjs --platform xhs --xhs-limit all
+node src\cli.mjs --mode since-latest-excel --platform both
 node src\cli.mjs --platform both --resume
 ```
 
-7. Report the generated Excel path printed as `Excel 已生成: ...`. Outputs are written under:
+`--mode since-latest-excel` reads the newest workbook in the desktop social summary folder, stops each platform before the first link from that workbook, and collects 10 items for any platform whose first link is missing.
 
-`C:\Users\Administrator\Desktop\code\social_zongjie\output`
+7. Report the generated Excel path printed as `Excel 已生成: ...`. Outputs are written under the desktop social summary folder:
+
+`C:\Users\Administrator\Desktop\社媒总结`
 
 ## What The Tool Collects
 
 - Douyin liked videos: opens content, uses the platform's built-in AI entry when available, asks for `视频总结`, and saves the original answer.
 - Douyin image-text posts: saves visible copy and local OCR text from post images.
-- Xiaohongshu liked image-text notes: saves visible note text and local OCR text from all reachable images.
-- Excel workbook sheets include Douyin content, Xiaohongshu content, and run logs. Rows retain clickable source links.
+- Xiaohongshu liked links: sends liked links to Xiaohongshu 点点 AI and saves the original answer.
+- Excel workbook sheets include Douyin content, Xiaohongshu content, and run logs. Rows retain plain source URLs.
 
 ## Resume And Recovery
 
-- `output\state.jsonl` stores processed rows for resume support.
+- `C:\Users\Administrator\Desktop\社媒总结\state.jsonl` stores processed rows for resume support.
 - Use `--resume` after interruption to skip already processed content IDs.
 - A per-item failure should be recorded in output and collection should continue.
 - A platform-level failure such as login loss, CAPTCHA, blocked access, or page redesign should stop that platform and be included in the final handoff.
+- Temporary OCR cleanup warnings such as Windows `EBUSY` should not be treated as content collection failures.
 
 ## Common Checks
 
@@ -101,7 +103,7 @@ node src\cli.mjs --platform both --resume
 Before claiming completion, run the narrow tests that do not require live platform access:
 
 ```powershell
-npm test -- test\core.test.mjs test\processing.test.mjs test\excel.test.mjs test\artifact-link.test.mjs
+npm test -- test\core.test.mjs test\processing.test.mjs test\excel.test.mjs test\artifact-link.test.mjs test\workflow.test.mjs test\douyin-note.test.mjs
 ```
 
-For live collection, successful verification is the printed Excel path plus a workbook under `output\` containing the requested platform rows or clearly logged platform errors.
+For live collection, successful verification is the printed Excel path plus a workbook under `C:\Users\Administrator\Desktop\社媒总结` containing the requested platform rows or clearly logged platform errors.

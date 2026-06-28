@@ -1,4 +1,4 @@
 interface:
   display_name: "Social Media Liked Collector"
   short_description: "Collect liked Douyin and Xiaohongshu originals into Excel."
-  default_prompt: "Collect liked Douyin and Xiaohongshu content with the local social_zongjie tool."
+  default_prompt: "Collect liked Douyin and Xiaohongshu content with the bundled social_zongjie tool."
